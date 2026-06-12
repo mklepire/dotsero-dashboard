@@ -1,19 +1,30 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
+import EditParcelModal from '../components/EditParcelModal';
 
 const fmtMoney = (n) => n != null ? `$${Number(n).toLocaleString()}` : '—';
 
 export default function Parcels() {
-  const [parcels,  setParcels]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const [parcels,    setParcels]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [editParcel, setEditParcel] = useState(null);  // null=closed, {}=new, parcel=edit
+  const [showModal,  setShowModal]  = useState(false);
 
-  useEffect(() => {
-    supabase.from('parcels').select('*, tenants(company_name)').order('lot_number').then(({ data }) => {
-      setParcels(data || []);
-      setLoading(false);
-    });
-  }, []);
+  const load = async () => {
+    const { data } = await supabase
+      .from('parcels')
+      .select('*, tenants(company_name)')
+      .order('lot_number');
+    setParcels(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const openNew  = () => { setEditParcel({}); setShowModal(true); };
+  const openEdit = (p) => { setEditParcel(p); setShowModal(true); };
+  const close    = () => { setShowModal(false); setEditParcel(null); };
 
   const vacant   = parcels.filter(p => p.status === 'vacant').length;
   const occupied = parcels.filter(p => p.status === 'occupied').length;
@@ -36,12 +47,16 @@ export default function Parcels() {
         </div>
         <div className="metric" style={{flex:1}}>
           <div className="metric-label">Monthly revenue</div>
-          <div className="metric-value">{fmtMoney(parcels.filter(p=>p.status==='occupied').reduce((s,p)=>s+Number(p.monthly_rate||0),0))}</div>
+          <div className="metric-value">
+            {fmtMoney(parcels.filter(p => p.status==='occupied').reduce((s,p) => s + Number(p.monthly_rate||0), 0))}
+          </div>
         </div>
       </div>
 
       <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'1rem'}}>
-        <button className="btn btn-primary"><Plus size={14}/> Add lot</button>
+        <button className="btn btn-primary" onClick={openNew}>
+          <Plus size={14}/> Add lot
+        </button>
       </div>
 
       <div className="card" style={{padding:0,overflow:'hidden'}}>
@@ -54,23 +69,28 @@ export default function Parcels() {
               <th>Status</th>
               <th>Current tenant</th>
               <th>Monthly rate</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6}><div className="loading-row"><div className="spinner"/></div></td></tr>}
+            {loading && (
+              <tr><td colSpan={7}><div className="loading-row"><div className="spinner"/></div></td></tr>
+            )}
             {!loading && parcels.length === 0 && (
-              <tr><td colSpan={6}>
+              <tr><td colSpan={7}>
                 <div className="empty-state">
                   <div className="empty-state-title">No lots added yet</div>
-                  <div className="empty-state-sub">Add your lots to get started</div>
+                  <div className="empty-state-sub">Click "Add lot" to get started</div>
                 </div>
               </td></tr>
             )}
             {parcels.map(p => (
               <tr key={p.id}>
                 <td className="td-primary">{p.lot_number || '—'}</td>
-                <td>{p.name}</td>
-                <td className="td-muted" style={{maxWidth:240,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.description || '—'}</td>
+                <td>{p.name || '—'}</td>
+                <td className="td-muted" style={{maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {p.description || '—'}
+                </td>
                 <td>
                   <span className={`badge ${p.status==='occupied'?'badge-active':p.status==='vacant'?'badge-vacant':'badge-pending'}`}>
                     {p.status}
@@ -78,11 +98,24 @@ export default function Parcels() {
                 </td>
                 <td className="td-muted">{p.tenants?.company_name || '—'}</td>
                 <td>{fmtMoney(p.monthly_rate)}</td>
+                <td>
+                  <button className="btn btn-sm" onClick={() => openEdit(p)}>
+                    <Pencil size={12}/> Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {showModal && (
+        <EditParcelModal
+          parcel={editParcel}
+          onClose={close}
+          onSave={load}
+        />
+      )}
     </div>
   );
 }

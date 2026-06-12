@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Pencil } from 'lucide-react';
+import EditTenantModal from '../components/EditTenantModal';
 
 const initials = (name) => name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '?';
 const COLORS = ['#E8F0EB','#FDF3E3','#E3EEF9','#F9EDE5','#F0EDE8'];
@@ -11,21 +12,22 @@ const STATUS_TABS = ['all','active','prospect','former'];
 
 export default function Tenants() {
   const navigate = useNavigate();
-  const [tenants, setTenants]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search,  setSearch]    = useState('');
-  const [tab,     setTab]       = useState('all');
+  const [tenants,     setTenants]     = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [search,      setSearch]      = useState('');
+  const [tab,         setTab]         = useState('all');
+  const [editTenant,  setEditTenant]  = useState(null);
+  const [showModal,   setShowModal]   = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      let q = supabase.from('tenants').select('*').order('company_name');
-      if (tab !== 'all') q = q.eq('status', tab);
-      const { data } = await q;
-      setTenants(data || []);
-      setLoading(false);
-    }
-    load();
-  }, [tab]);
+  const load = async () => {
+    let q = supabase.from('tenants').select('*').order('company_name');
+    if (tab !== 'all') q = q.eq('status', tab);
+    const { data } = await q;
+    setTenants(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [tab]);
 
   const filtered = tenants.filter(t =>
     !search ||
@@ -33,6 +35,10 @@ export default function Tenants() {
     t.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
     t.email?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const openNew  = () => { setEditTenant({}); setShowModal(true); };
+  const openEdit = (t, e) => { e.stopPropagation(); setEditTenant(t); setShowModal(true); };
+  const close    = () => { setShowModal(false); setEditTenant(null); };
 
   return (
     <div className="page-content">
@@ -47,14 +53,14 @@ export default function Tenants() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/tenants/new')}>
+        <button className="btn btn-primary" onClick={openNew}>
           <Plus size={14}/> Add tenant
         </button>
       </div>
 
       <div className="tabs">
         {STATUS_TABS.map(s => (
-          <div key={s} className={`tab ${tab===s?'active':''}`} onClick={()=>setTab(s)}>
+          <div key={s} className={`tab ${tab===s?'active':''}`} onClick={()=>{ setTab(s); setLoading(true); }}>
             {s.charAt(0).toUpperCase()+s.slice(1)}
           </div>
         ))}
@@ -92,10 +98,11 @@ export default function Tenants() {
                 <td className="td-muted">{t.contact_name || '—'}</td>
                 <td className="td-muted">{t.email || '—'}</td>
                 <td className="td-muted">{t.phone || '—'}</td>
-                <td>
-                  <span className={`badge badge-${t.status}`}>{t.status}</span>
-                </td>
-                <td onClick={e => e.stopPropagation()}>
+                <td><span className={`badge badge-${t.status}`}>{t.status}</span></td>
+                <td onClick={e => e.stopPropagation()} style={{display:'flex',gap:6}}>
+                  <button className="btn btn-sm" onClick={e => openEdit(t, e)}>
+                    <Pencil size={12}/> Edit
+                  </button>
                   <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}`)}>
                     View
                   </button>
@@ -105,9 +112,18 @@ export default function Tenants() {
           </tbody>
         </table>
       </div>
+
       <div style={{fontSize:12,color:'var(--slate-light)',marginTop:8}}>
         {filtered.length} tenant{filtered.length !== 1 ? 's' : ''}
       </div>
+
+      {showModal && (
+        <EditTenantModal
+          tenant={editTenant}
+          onClose={close}
+          onSave={load}
+        />
+      )}
     </div>
   );
 }

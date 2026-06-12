@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Mail, Phone, Send, FileText, Receipt, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Send, FileText, Receipt, ClipboardList, Pencil } from 'lucide-react';
 import Notes from '../components/Notes';
+import EditTenantModal from '../components/EditTenantModal';
 
 const fmtMoney = (n) => n != null ? `$${Number(n).toLocaleString()}` : '—';
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
@@ -16,6 +17,7 @@ export default function TenantDetail() {
   const [comms,    setComms]    = useState([]);
   const [tab,      setTab]      = useState('overview');
   const [loading,  setLoading]  = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -55,7 +57,9 @@ export default function TenantDetail() {
           </div>
         </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
-          {tenant.email && (
+          <button className="btn btn-sm" onClick={() => setShowEdit(true)}>
+            <Pencil size={12}/> Edit
+          </button>
             <a href={`mailto:${tenant.email}`} className="btn btn-sm">
               <Mail size={12}/> Email
             </a>
@@ -196,6 +200,17 @@ export default function TenantDetail() {
         <div className="card">
           <Notes tenantId={id} />
         </div>
+      )}
+
+      {showEdit && (
+        <EditTenantModal
+          tenant={tenant}
+          onClose={() => setShowEdit(false)}
+          onSave={() => {
+            setShowEdit(false);
+            load();
+          }}
+        />
       )}
     </div>
   );
