@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Mail, Phone, Send, FileText, Receipt } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Send, FileText, Receipt, ClipboardList } from 'lucide-react';
+import Notes from '../components/Notes';
 
 const fmtMoney = (n) => n != null ? `$${Number(n).toLocaleString()}` : '—';
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
@@ -87,7 +88,7 @@ export default function TenantDetail() {
 
       {/* Tabs */}
       <div className="tabs">
-        {['overview','leases','invoices','communications'].map(t => (
+        {['overview','leases','invoices','communications','notes'].map(t => (
           <div key={t} className={`tab ${tab===t?'active':''}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase()+t.slice(1)}
             {t==='invoices' && overdueInvoices.length > 0 && (
@@ -188,6 +189,12 @@ export default function TenantDetail() {
               <div className="activity-time">{new Date(c.created_at).toLocaleDateString()}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === 'notes' && (
+        <div className="card">
+          <Notes tenantId={id} />
         </div>
       )}
     </div>
