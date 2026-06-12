@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Search, Plus, Send } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 const initials = (name) => name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '?';
 const COLORS = ['#E8F0EB','#FDF3E3','#E3EEF9','#F9EDE5','#F0EDE8'];
