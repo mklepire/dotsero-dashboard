@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import './index.css';
-import { LayoutDashboard, Users, MapPin, FileText, Receipt, Bell, MessageSquare, Settings, CheckSquare, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, FileText, Receipt, Bell, MessageSquare, Settings, CheckSquare, LogOut, RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import Login         from './pages/Login';
 import Dashboard     from './pages/Dashboard';
@@ -11,6 +11,7 @@ import Leases        from './pages/Leases';
 import Invoices      from './pages/Invoices';
 import Communications from './pages/Communications';
 import Tasks         from './pages/Tasks';
+import InvoiceSync   from './pages/InvoiceSync';
 
 const NAV = [
   { section: 'Main' },
@@ -20,6 +21,7 @@ const NAV = [
   { path: '/leases',         label: 'Leases',         Icon: FileText },
   { section: 'Billing' },
   { path: '/invoices',       label: 'Invoices',       Icon: Receipt },
+  { path: '/invoice-sync',   label: 'QB Sync',        Icon: RefreshCw },
   { path: '/followups',      label: 'Follow-ups',     Icon: Bell },
   { section: 'Tools' },
   { path: '/tasks',          label: 'Tasks',          Icon: CheckSquare },
@@ -33,6 +35,7 @@ const PAGE_TITLES = {
   '/parcels':        'Lots & Parcels',
   '/leases':         'Leases',
   '/invoices':       'Invoices',
+  '/invoice-sync':   'QB Invoice Sync',
   '/followups':      'Follow-ups',
   '/tasks':          'Tasks',
   '/communications': 'Communications',
@@ -115,6 +118,7 @@ function AppShell() {
           <Route path="/parcels"            element={<Parcels />} />
           <Route path="/leases"             element={<Leases />} />
           <Route path="/invoices"           element={<Invoices />} />
+          <Route path="/invoice-sync"      element={<InvoiceSync />} />
           <Route path="/tasks"              element={<Tasks />} />
           <Route path="/communications"     element={<Communications />} />
           <Route path="*"                   element={<div className="page-content"><p style={{color:'var(--slate-light)'}}>Page coming soon.</p></div>} />
