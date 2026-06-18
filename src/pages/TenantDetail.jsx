@@ -19,22 +19,21 @@ export default function TenantDetail() {
   const [loading,  setLoading]  = useState(true);
   const [showEdit, setShowEdit] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      const [{ data: t }, { data: l }, { data: inv }, { data: c }] = await Promise.all([
-        supabase.from('tenants').select('*').eq('id',id).single(),
-        supabase.from('leases').select('*, parcels(name,lot_number)').eq('tenant_id',id).order('created_at',{ascending:false}),
-        supabase.from('invoices').select('*').eq('tenant_id',id).order('due_date',{ascending:false}).limit(10),
-        supabase.from('communications').select('*').eq('tenant_id',id).order('created_at',{ascending:false}).limit(20),
-      ]);
-      setTenant(t);
-      setLeases(l || []);
-      setInvoices(inv || []);
-      setComms(c || []);
-      setLoading(false);
-    }
-    load();
-  }, [id]);
+  const load = async () => {
+    const [{ data: t }, { data: l }, { data: inv }, { data: c }] = await Promise.all([
+      supabase.from('tenants').select('*').eq('id',id).single(),
+      supabase.from('leases').select('*, parcels(name,lot_number)').eq('tenant_id',id).order('created_at',{ascending:false}),
+      supabase.from('invoices').select('*').eq('tenant_id',id).order('due_date',{ascending:false}).limit(10),
+      supabase.from('communications').select('*').eq('tenant_id',id).order('created_at',{ascending:false}).limit(20),
+    ]);
+    setTenant(t);
+    setLeases(l || []);
+    setInvoices(inv || []);
+    setComms(c || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [id]);
 
   if (loading) return <div className="page-content"><div className="loading-row"><div className="spinner"/></div></div>;
   if (!tenant) return <div className="page-content"><p>Tenant not found.</p></div>;
